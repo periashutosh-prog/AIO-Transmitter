@@ -81,9 +81,11 @@ AIO-TX is built on shared firmware architecture and design language from [**Stra
 
 ## 🏆 EasyEDA Spark 2026
 
-This project is participating in **EasyEDA Spark 2026**.
+This project is proudly participating in **[EasyEDA Spark 2026](https://oshwlab.com/activities/easyeda-spark-2026?inviter=periashutosh)** — an open-source hardware competition backed by an **$85,000 prize pool**, with free PCB, 3D printing, and CNC manufacturing support for eligible projects.
 
-<!-- TODO: add EasyEDA logo image and official event link once assets are pulled from the shared Drive folder -->
+If you're building your own open-source hardware project — whether it's a fully custom board like AIO-TX or something just getting off the ground — it's well worth checking out. Sponsorship covers real manufacturing costs, not just recognition, which made a genuine difference in getting REV 2.0 of this project built.
+
+👉 **[Join EasyEDA Spark 2026](https://oshwlab.com/activities/easyeda-spark-2026?inviter=periashutosh)**
 
 ---
 
