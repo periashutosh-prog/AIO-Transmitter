@@ -1,0 +1,19 @@
+U1 --> XIAO-ESP32-C6
+U17 --> MT3608 Module
+U18 --> 1000uF 16v Capacitor
+U19 --> 0.1uF Ceramic Capacitor
+U20 --> 10kΩ Resistor
+U21 --> 10kΩ Resistor
+U22 --> 20kΩ Resistor
+U23 --> 20kΩ Resistor
+U24 --> 0.96" I2C OLED Module 
+U25 --> TP4056 Module (with Built-in Protection)
+U26 --> MCP23017-E/SP DIP Package
+U27 --> 0.1uF Ceramic Capacitor
+U28 --> 4.7kΩ Resistor
+U29 --> 4.7kΩ Resistor
+U30 --> 4.7kΩ Resistor
+U31 --> 5mm Pitch 5v Buzzer.
+ 
+BAT1 --> SMD 18650 Battery Holder
+SW1 to SW19 --> 6x6x6mm Tactile Switches (Height of the switch can be varied to fit the 3D Printed Enclosure)

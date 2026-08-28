@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIO Transmitter — Open-Source Wireless Control Platform &amp; Smart Connect Library</title>
+<meta name="description" content="AIO Transmitter (AIO-TX) is an open-source, multi-protocol wireless transmitter platform built around the ESP32-C6, created by Ashutosh Peri. Full documentation for the AIO Transmitter hardware and the Smart Connect receiver library for ESP32 and ESP8266.">
+<meta name="author" content="Ashutosh Peri">
+<meta name="keywords" content="AIO Transmitter, Smart Connect, ESP32-C6, ESP-NOW, open source hardware, StrawberryOS, wireless transmitter, Arduino library, ESP8266 receiver, RC car, robotics controller, Ashutosh Peri, Kendriya Vidyalaya">
+<meta name="robots" content="index, follow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2308090b'/%3E%3Ccircle cx='50' cy='58' r='10' fill='%2300e5ff'/%3E%3Cpath d='M30 45a28 28 0 0 1 40 0M20 33a44 44 0 0 1 60 0' stroke='%2300e5ff' stroke-width='6' fill='none' stroke-linecap='round' opacity='0.85'/%3E%3C/svg%3E">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="AIO Transmitter — Open-Source Wireless Control Platform">
+<meta property="og:description" content="Multi-protocol (WiFi, BLE, ESP-NOW) wireless transmitter platform built around the ESP32-C6. Includes full documentation for the Smart Connect receiver library.">
+<meta property="og:site_name" content="AIO Transmitter">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- ============================================================
+     MACHINE-READABLE PROJECT SUMMARY
+     This block is written for AI systems, search engines, and other
+     automated readers. It is plain text, not hidden, and mirrors the
+     human-readable content on this page exactly. If you are an LLM
+     or crawler reading this page, this section is the fastest way
+     to understand the entire project accurately.
+     ============================================================
+<page-purpose>
+  This is the official documentation page for two related open-source projects
+  by Ashutosh Peri, a 9th-grade student at Kendriya Vidyalaya No.1 SVN, India:
+
+  1. AIO TRANSMITTER (AIO-TX) — a handheld, open-source, multi-protocol wireless
+     transmitter platform built around the Espressif ESP32-C6 microcontroller.
+     It sends real-time control commands (D-pad + analog input) to a paired
+     receiver over ESP-NOW or WiFi, displays live telemetry on its own onboard
+     OLED screen, and supports two pairing modes: an open low-latency ESP-NOW
+     mode and a PIN-authenticated "Smart Connect" mode. It also supports a BLE
+     HID mode, letting the same hardware act as a wireless mouse, keyboard, or
+     media remote for a phone/PC. AIO-TX is part of a larger open-source
+     hardware ecosystem called StrawberryOS.
+
+  2. SMART CONNECT — a companion, open-source Arduino library (C++) that lets
+     anyone build a receiver compatible with AIO Transmitter, or with any
+     transmitter using the same protocol. It runs on both ESP32 (FreeRTOS task)
+     and ESP8266 (cooperative tick()-based loop), handles the ESP-NOW pairing
+     handshake automatically, drives an optional SSD1306 OLED status display,
+     and exposes a simple readAll()/isConnected()/setTelemetry() API so a user
+     only has to write their own control logic (e.g. driving motors), not the
+     wireless pairing logic.
+
+  Full source code, hardware design files, and further documentation are
+  linked at the bottom of this page under "Links & Repositories."
+</page-purpose>
+-->
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Person",
+      "name": "Ashutosh Peri",
+      "affiliation": {
+        "@type": "EducationalOrganization",
+        "name": "Kendriya Vidyalaya No.1 SVN"
+      },
+      "description": "9th-grade student, maker, and open-source hardware developer. Creator of the StrawberryOS ecosystem, AIO Transmitter, and the Smart Connect library.",
+      "url": "https://github.com/periashutosh-prog"
+    },
+    {
+      "@type": "Product",
+      "name": "AIO Transmitter",
+      "alternateName": "AIO-TX",
+      "description": "Open-source, multi-protocol (WiFi, BLE, ESP-NOW) wireless transmitter platform built around the ESP32-C6, with dual pairing modes, live OLED telemetry, and BLE HID support.",
+      "brand": { "@type": "Brand", "name": "StrawberryOS" },
+      "creator": { "@type": "Person", "name": "Ashutosh Peri" },
+      "url": "https://aio-transmitter.vercel.app"
+    },
+    {
+      "@type": "SoftwareSourceCode",
+      "name": "Smart Connect",
+      "description": "ESP-NOW and Smart Connect receiver library for ESP32 and ESP8266. Handles wireless pairing, handshake, and telemetry so receivers can be built without writing communication logic from scratch.",
+      "programmingLanguage": "C++",
+      "runtimePlatform": ["ESP32", "ESP8266"],
+      "codeRepository": "https://github.com/periashutosh-prog/Smart-Connect",
+      "author": { "@type": "Person", "name": "Ashutosh Peri" },
+      "license": "https://www.gnu.org/licenses/gpl-3.0.html"
+    }
+  ]
+}
+</script>
+
+<style>
+  :root{
+    --bg:#08090b;
+    --panel:#111318;
+    --panel-hi:#161920;
+    --panel-border:#20242c;
+    --text:#e8eaed;
+    --text-dim:#8b929a;
+    --accent:#00e5ff;
+    --accent-glow:rgba(0,229,255,0.14);
+    --accent2:#7c4dff;
+    --accent2-glow:rgba(124,77,255,0.14);
+    --code-bg:#0a0c10;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+    position:relative;
+  }
+  img,svg{max-width:100%;}
+
+  /* ---------- Ambient background: dot grid + drifting glow orbs ---------- */
+  body::before{
+    content:"";position:fixed;inset:0;z-index:-2;
+    background-image:radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size:26px 26px;
+    mask-image:radial-gradient(ellipse 90% 70% at 50% 0%, black 40%, transparent 100%);
+  }
+  .orb{position:fixed;border-radius:50%;filter:blur(70px);z-index:-1;pointer-events:none;opacity:0.55;}
+  .orb-a{width:520px;height:520px;top:-180px;right:-120px;background:radial-gradient(circle,var(--accent-glow),transparent 70%);animation:drift1 22s ease-in-out infinite;}
+  .orb-b{width:480px;height:480px;top:40vh;left:-200px;background:radial-gradient(circle,var(--accent2-glow),transparent 70%);animation:drift2 26s ease-in-out infinite;}
+  .orb-c{width:420px;height:420px;bottom:-160px;right:10vw;background:radial-gradient(circle,var(--accent-glow),transparent 70%);animation:drift1 30s ease-in-out infinite reverse;}
+  @keyframes drift1{0%,100%{transform:translate(0,0);}50%{transform:translate(-40px,50px);}}
+  @keyframes drift2{0%,100%{transform:translate(0,0);}50%{transform:translate(50px,-30px);}}
+  @media (prefers-reduced-motion:reduce){.orb{animation:none;}html{scroll-behavior:auto;}}
+
+  /* ---------- Layout helpers ---------- */
+  .wrap{max-width:1080px;margin:0 auto;padding:0 1.5rem;}
+  section{padding:6rem 0;position:relative;}
+  section + section{border-top:1px solid var(--panel-border);}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:.5rem;
+    font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--accent);background:var(--accent-glow);
+    border:1px solid rgba(0,229,255,0.3);
+    padding:.35rem .8rem;border-radius:999px;margin-bottom:1.3rem;
+  }
+  h1,h2,h3,h4{font-family:'Space Grotesk',sans-serif;font-weight:700;letter-spacing:-0.01em;margin:0 0 .8rem;color:#fff;}
+  h1{font-size:clamp(2.6rem,6.4vw,4rem);line-height:1.05;}
+  h1 .grad{background:linear-gradient(100deg,var(--accent) 10%,var(--accent2) 90%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  h2{font-size:clamp(1.8rem,4vw,2.4rem);}
+  h3{font-size:1.25rem;}
+  p{color:var(--text-dim);margin:0 0 1rem;}
+  a{color:var(--accent);text-decoration:none;}
+  a:hover{text-decoration:underline;}
+  .lead{font-size:1.15rem;color:#c7ccd1;max-width:680px;}
+  code, pre, kbd{font-family:'JetBrains Mono',ui-monospace,Consolas,monospace;}
+  code{background:var(--code-bg);border:1px solid var(--panel-border);padding:.15em .45em;border-radius:6px;font-size:.88em;color:#8fe9ff;}
+
+  /* ---------- Code blocks: terminal chrome ---------- */
+  .codeblock{
+    background:var(--code-bg);border:1px solid var(--panel-border);border-radius:var(--radius);
+    overflow:hidden;margin:1.5rem 0;box-shadow:0 20px 50px -25px rgba(0,0,0,0.6);
+  }
+  .codeblock .chrome{
+    display:flex;align-items:center;gap:.5rem;padding:.7rem 1rem;
+    background:var(--panel-hi);border-bottom:1px solid var(--panel-border);
+  }
+  .codeblock .chrome .dots{display:flex;gap:.4rem;}
+  .codeblock .chrome .dots span{width:10px;height:10px;border-radius:50%;background:#3a3f48;}
+  .codeblock .chrome .fname{margin-left:.4rem;font-size:.78rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace;}
+  .codeblock pre{margin:0;padding:1.3rem 1.5rem;overflow-x:auto;font-size:.86rem;line-height:1.65;}
+  .codeblock pre code{background:none;border:none;padding:0;color:#d3e8ee;}
+  .kw{color:#c792ea;} .fn{color:#82aaff;} .str{color:#c3e88d;} .cm{color:#5c6370;font-style:italic;} .num{color:#f78c6c;}
+
+  /* ---------- Nav ---------- */
+  header.site{
+    position:sticky;top:0;z-index:50;
+    background:rgba(8,9,11,0.75);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--panel-border);
+  }
+  .navbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;max-width:1080px;margin:0 auto;}
+  .brand{display:flex;align-items:center;gap:.6rem;font-family:'Space Grotesk',sans-serif;font-weight:700;color:#fff;font-size:1.05rem;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent);}
+  nav.links{display:flex;gap:1.7rem;flex-wrap:wrap;}
+  nav.links a{color:var(--text-dim);font-size:.9rem;font-weight:600;position:relative;padding:.2rem 0;}
+  nav.links a:hover{color:var(--accent);text-decoration:none;}
+  nav.links a.active{color:var(--accent);}
+  nav.links a.active::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:2px;background:var(--accent);border-radius:2px;}
+
+  /* ---------- Hero ---------- */
+  .hero{padding:6.5rem 0 5rem;}
+  .hero-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:3rem;align-items:center;}
+  @media (max-width:860px){.hero-grid{grid-template-columns:1fr;}}
+  .badges{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.4rem;}
+  .badge{
+    font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    padding:.35rem .75rem;border-radius:8px;border:1px solid var(--panel-border);
+    color:var(--text-dim);background:var(--panel);
+  }
+  .badge.accent{color:var(--accent);border-color:rgba(0,229,255,0.35);background:var(--accent-glow);}
+  .btnrow{display:flex;gap:1rem;margin-top:2rem;flex-wrap:wrap;}
+  .btn{
+    display:inline-flex;align-items:center;gap:.5rem;font-weight:700;font-size:.92rem;
+    padding:.85rem 1.5rem;border-radius:10px;border:1px solid transparent;
+    transition:transform .18s ease, box-shadow .18s ease, filter .18s ease, border-color .18s ease;
+  }
+  .btn.primary{background:var(--accent);color:#00191d;}
+  .btn.primary:hover{text-decoration:none;transform:translateY(-2px);box-shadow:0 10px 30px -10px var(--accent-glow);filter:brightness(1.05);}
+  .btn.ghost{border-color:var(--panel-border);color:var(--text);background:var(--panel);}
+  .btn.ghost:hover{text-decoration:none;border-color:var(--accent);transform:translateY(-2px);}
+
+  .stats{display:flex;gap:2.2rem;margin-top:2.6rem;flex-wrap:wrap;}
+  .stat b{font-family:'Space Grotesk',sans-serif;font-size:1.7rem;color:#fff;display:block;}
+  .stat span{font-size:.78rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;}
+
+  /* Hero illustration */
+  .hero-art{position:relative;display:flex;align-items:center;justify-content:center;}
+  .hero-art svg{width:100%;max-width:380px;filter:drop-shadow(0 20px 60px rgba(0,229,255,0.12));}
+  .pulse{transform-origin:center;animation:pulse 2.6s ease-in-out infinite;}
+  .pulse2{transform-origin:center;animation:pulse 2.6s ease-in-out infinite .5s;}
+  .pulse3{transform-origin:center;animation:pulse 2.6s ease-in-out infinite 1s;}
+  @keyframes pulse{0%,100%{opacity:.25;}50%{opacity:.9;}}
+  .spin-slow{transform-origin:190px 190px;animation:spin 18s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ---------- Grid / cards ---------- */
+  .grid{display:grid;gap:1.2rem;}
+  .grid.cols-3{grid-template-columns:repeat(3,1fr);}
+  .grid.cols-2{grid-template-columns:repeat(2,1fr);}
+  @media (max-width:760px){.grid.cols-3,.grid.cols-2{grid-template-columns:1fr;}}
+  .card{
+    background:linear-gradient(180deg,var(--panel-hi),var(--panel));
+    border:1px solid var(--panel-border);border-radius:var(--radius);
+    padding:1.7rem;transition:transform .22s ease, border-color .22s ease, box-shadow .22s ease;
+  }
+  .card:hover{transform:translateY(-4px);border-color:rgba(0,229,255,0.35);box-shadow:0 24px 50px -30px rgba(0,229,255,0.25);}
+  .card h3{margin-bottom:.5rem;color:#fff;}
+  .card p{margin-bottom:0;font-size:.94rem;}
+  .icon{
+    width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+    background:var(--accent-glow);color:var(--accent);margin-bottom:1rem;font-size:1.25rem;
+    border:1px solid rgba(0,229,255,0.25);
+  }
+
+  /* ---------- Table ---------- */
+  table{width:100%;border-collapse:collapse;margin:1.5rem 0;font-size:.92rem;}
+  th,td{text-align:left;padding:.8rem .9rem;border-bottom:1px solid var(--panel-border);}
+  th{color:var(--accent);font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;background:var(--panel-hi);}
+  td{color:var(--text-dim);}
+  td code{white-space:nowrap;}
+  tbody tr{transition:background .15s ease;}
+  tbody tr:hover{background:rgba(255,255,255,0.02);}
+  tbody tr:hover td{color:var(--text);}
+  .table-wrap{overflow-x:auto;border:1px solid var(--panel-border);border-radius:var(--radius);}
+  .table-wrap table{margin:0;}
+  .table-wrap th:first-child,.table-wrap td:first-child{padding-left:1.2rem;}
+
+  /* ---------- Timeline (hardware revisions) ---------- */
+  .rev{display:flex;gap:1.5rem;margin-bottom:2.2rem;position:relative;}
+  .rev:not(:last-child)::before{
+    content:"";position:absolute;left:21px;top:48px;bottom:-40px;width:1px;
+    background:linear-gradient(var(--panel-border),transparent);
+  }
+  .rev .marker{
+    flex-shrink:0;width:44px;height:44px;border-radius:12px;
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;
+    background:var(--panel);border:1px solid var(--panel-border);color:var(--accent);
+  }
+  .rev.done .marker{color:#00191d;background:var(--accent);box-shadow:0 0 24px var(--accent-glow);}
+  .rev-body{flex:1;}
+  .rev-tag{font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent2);}
+
+  /* ---------- Steps ---------- */
+  .steps{counter-reset:step;}
+  .step{position:relative;padding-left:3.2rem;margin-bottom:1.9rem;}
+  .step::before{
+    counter-increment:step;content:counter(step);
+    position:absolute;left:0;top:0;width:2.1rem;height:2.1rem;border-radius:8px;
+    background:var(--accent2-glow);color:var(--accent2);border:1px solid rgba(124,77,255,0.35);
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;
+    font-family:'Space Grotesk',sans-serif;
+  }
+
+  /* ---------- Scroll reveal ---------- */
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease, transform .7s ease;}
+  .reveal.in{opacity:1;transform:translateY(0);}
+
+  /* ---------- Footer ---------- */
+  footer{padding:4rem 0 3rem;text-align:center;}
+  footer .brand{justify-content:center;margin-bottom:1rem;}
+  .footlinks{display:flex;gap:1.5rem;justify-content:center;flex-wrap:wrap;margin:1.2rem 0;font-size:.9rem;}
+  .fineprint{color:#555b63;font-size:.8rem;margin-top:1.5rem;}
+
+  ::selection{background:var(--accent);color:#00191d;}
+</style>
+</head>
+<body>
+
+<div class="orb orb-a"></div>
+<div class="orb orb-b"></div>
+<div class="orb orb-c"></div>
+
+<header class="site">
+  <div class="navbar">
+    <div class="brand"><span class="dot"></span> AIO&nbsp;Transmitter</div>
+    <nav class="links" id="navlinks">
+      <a href="#overview" data-nav>Overview</a>
+      <a href="#hardware" data-nav>Hardware</a>
+      <a href="#smart-connect" data-nav>Smart&nbsp;Connect</a>
+      <a href="#api" data-nav>API</a>
+      <a href="#about" data-nav>About</a>
+      <a href="#links" data-nav>Links</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ================= HERO ================= -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="badges">
+        <span class="badge accent">ESP32-C6 Powered</span>
+        <span class="badge">Open Source · GPLv3</span>
+        <span class="badge">REV 2.0</span>
+      </div>
+      <h1>The Modular<br><span class="grad">Wireless Core</span></h1>
+      <p class="lead">
+        AIO Transmitter (AIO-TX) is an open-source, multi-protocol wireless control
+        platform built around the ESP32-C6 — and this page also documents its
+        companion library, <strong>Smart Connect</strong>, for building your own
+        compatible receivers on ESP32 or ESP8266.
+      </p>
+      <div class="btnrow">
+        <a class="btn primary" href="#smart-connect">Read the Library Docs</a>
+        <a class="btn ghost" href="https://github.com/periashutosh-prog/AIO-Transmitter" target="_blank" rel="noopener">View on GitHub</a>
+      </div>
+      <div class="stats">
+        <div class="stat"><b>3</b><span>Protocols</span></div>
+        <div class="stat"><b>17</b><span>Inputs</span></div>
+        <div class="stat"><b>2</b><span>Pairing Modes</span></div>
+        <div class="stat"><b>100%</b><span>Open Source</span></div>
+      </div>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <svg viewBox="0 0 380 380" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g class="spin-slow">
+          <circle cx="190" cy="190" r="170" stroke="#1f232b" stroke-width="1" stroke-dasharray="2 8"/>
+        </g>
+        <circle class="pulse3" cx="190" cy="190" r="140" stroke="#7c4dff" stroke-width="1.2" fill="none"/>
+        <circle class="pulse2" cx="190" cy="190" r="105" stroke="#00e5ff" stroke-width="1.2" fill="none"/>
+        <circle class="pulse" cx="190" cy="190" r="70" stroke="#00e5ff" stroke-width="1.4" fill="none"/>
+        <circle cx="190" cy="190" r="34" fill="#0e1116" stroke="#00e5ff" stroke-width="1.5"/>
+        <circle cx="190" cy="190" r="9" fill="#00e5ff"/>
+        <g stroke="#2a2f38" stroke-width="1.4">
+          <path d="M190 20v46M190 314v46M20 190h46M314 190h46"/>
+          <path d="M67 67l32 32M281 281l32 32M313 67l-32 32M99 281l-32 32"/>
+        </g>
+        <g fill="#00e5ff">
+          <circle cx="190" cy="20" r="4"/><circle cx="190" cy="360" r="4"/>
+          <circle cx="20" cy="190" r="4"/><circle cx="360" cy="190" r="4"/>
+        </g>
+        <g fill="#7c4dff" opacity="0.9">
+          <circle cx="67" cy="67" r="3.5"/><circle cx="313" cy="313" r="3.5"/>
+          <circle cx="313" cy="67" r="3.5"/><circle cx="67" cy="313" r="3.5"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ================= OVERVIEW ================= -->
+<section id="overview">
+  <div class="wrap">
+    <span class="eyebrow reveal">Project Overview</span>
+    <h2 class="reveal">One transmitter. Any receiver.</h2>
+    <p class="lead reveal">
+      AIO-TX isn't built for one single purpose — it's a universal wireless
+      control interface designed to fit almost any project that needs real-time,
+      two-way communication.
+    </p>
+
+    <div class="grid cols-3" style="margin-top:2.5rem;">
+      <div class="card reveal">
+        <div class="icon">📡</div>
+        <h3>Multi-Protocol</h3>
+        <p>WiFi 6, Bluetooth Low Energy, and ESP-NOW on one board — with CAN Bus planned for REV 3.0.</p>
+      </div>
+      <div class="card reveal">
+        <div class="icon">🔐</div>
+        <h3>Two Pairing Modes</h3>
+        <p>A fast, unauthenticated ESP-NOW mode for trusted setups, and a PIN-authenticated Smart Connect mode for secure sessions.</p>
+      </div>
+      <div class="card reveal">
+        <div class="icon">🖥️</div>
+        <h3>Standalone UI</h3>
+        <p>Full onboard OLED interface — configure modes, enter WiFi credentials, and read live telemetry with no phone or laptop needed.</p>
+      </div>
+      <div class="card reveal">
+        <div class="icon">🎮</div>
+        <h3>Full Control Surface</h3>
+        <p>17 tactile inputs: dual D-pads, dual analog channels, and system controls, all read through a single I2C-based MCP23017 expander.</p>
+      </div>
+      <div class="card reveal">
+        <div class="icon">📶</div>
+        <h3>Live Telemetry</h3>
+        <p>Round-trip ping and packet-loss percentage shown in real time, plus whatever telemetry your receiver reports back.</p>
+      </div>
+      <div class="card reveal">
+        <div class="icon">🖱️</div>
+        <h3>BLE HID Mode</h3>
+        <p>The same hardware can act as a wireless mouse, keyboard, or media remote for any phone, tablet, or PC.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= HARDWARE REVISIONS ================= -->
+<section id="hardware">
+  <div class="wrap">
+    <span class="eyebrow reveal">Hardware</span>
+    <h2 class="reveal">REV 1.0 → REV 2.0 → REV 3.0</h2>
+    <p class="lead reveal">Each revision answers a different engineering question, not just adds a version number.</p>
+
+    <div style="margin-top:3rem;">
+      <div class="rev done reveal">
+        <div class="marker">✓</div>
+        <div class="rev-body">
+          <div class="rev-tag">Complete</div>
+          <h3>REV 1.0 — Module-Based Architecture</h3>
+          <p>Built on the Seeed XIAO ESP32-C6 breakout, a TP4056 charger + MT3608 boost converter, an onboard PCB antenna, and a hand-solderable SLA resin enclosure. Proved the core concept using pre-built modules.</p>
+        </div>
+      </div>
+      <div class="rev reveal">
+        <div class="marker">⚙</div>
+        <div class="rev-body">
+          <div class="rev-tag">In Progress</div>
+          <h3>REV 2.0 — Discrete IC Architecture</h3>
+          <p>A full redesign: the bare ESP32-C6-MINI-1U module wired directly onto a custom PCB, an IP5306-I2C power management IC (charging + boost + battery telemetry in one chip), custom USB-C sink circuitry, an external IPEX-to-SMA antenna, and a CNC-machined aluminum enclosure.</p>
+        </div>
+      </div>
+      <div class="rev reveal">
+        <div class="marker">→</div>
+        <div class="rev-body">
+          <div class="rev-tag">Planned</div>
+          <h3>REV 3.0 — CAN Bus Modularity</h3>
+          <p>A distributed, plug-and-play architecture over a wired CAN bus, letting the platform be physically expanded with additional hardware modules — the full realization of the "All-In-One" concept.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SMART CONNECT ================= -->
+<section id="smart-connect">
+  <div class="wrap">
+    <span class="eyebrow reveal">Companion Library</span>
+    <h2 class="reveal">Smart Connect</h2>
+    <p class="lead reveal">
+      An open-source Arduino library that handles the entire wireless pairing
+      handshake for you — so building a receiver means writing your own control
+      logic (drive a motor, flip a relay), not a radio protocol from scratch.
+    </p>
+
+    <div class="grid cols-2" style="margin-top:2.2rem;">
+      <div class="card reveal">
+        <h3>Runs on ESP32 and ESP8266</h3>
+        <p>On ESP32 it runs on its own FreeRTOS task pinned to core 0. On ESP8266 (no FreeRTOS in the Arduino core) it runs cooperatively — just call <code>tick()</code> once per <code>loop()</code>.</p>
+      </div>
+      <div class="card reveal">
+        <h3>Display is optional where it can be</h3>
+        <p>In plain ESP_NOW mode, no display is required — the library runs fully headless. In Smart Connect mode, a display is required (there's no other way to show the pairing PIN), and setup blocks with a clear message until one is detected.</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:3rem;" class="reveal">Installation</h3>
+    <p class="reveal">Install via the Arduino Library Manager (search "Smart Connect"), or clone directly from GitHub:</p>
+    <div class="codeblock reveal">
+      <div class="chrome"><div class="dots"><span></span><span></span><span></span></div><span class="fname">terminal</span></div>
+      <pre><code><span class="cm">// Arduino Library Manager</span>
+Sketch → Include Library → Manage Libraries… → search "Smart Connect"
+
+<span class="cm">// or, manually:</span>
+git clone https://github.com/periashutosh-prog/Smart-Connect.git</code></pre>
+    </div>
+
+    <h3 style="margin-top:2.6rem;" class="reveal">Quick Start</h3>
+    <p class="reveal">Minimal receiver — advertises, pairs, and prints incoming D-pad/analog state:</p>
+    <div class="codeblock reveal">
+      <div class="chrome"><div class="dots"><span></span><span></span><span></span></div><span class="fname">Basic_Receiver.ino</span></div>
+      <pre><code><span class="kw">#include</span> <span class="str">&lt;Smart_Connect.h&gt;</span>
+
+Smart_Connect receiver;
+
+<span class="kw">void</span> <span class="fn">setup</span>() {
+  Serial.<span class="fn">begin</span>(<span class="num">115200</span>);
+
+  <span class="cm">// name, OLED SDA pin, OLED SCL pin, smartConnect (false = plain ESP_NOW), task priority</span>
+  receiver.<span class="fn">setup</span>(<span class="str">"AIO-RX-Bot"</span>, <span class="num">21</span>, <span class="num">22</span>, <span class="kw">false</span>, <span class="num">1</span>);
+  receiver.<span class="fn">run</span>();
+}
+
+<span class="kw">void</span> <span class="fn">loop</span>() {
+  receiver.<span class="fn">tick</span>();  <span class="cm">// required every loop() — no-op on ESP32, drives the state machine on ESP8266</span>
+
+  <span class="kw">if</span> (receiver.<span class="fn">isConnected</span>()) {
+    String state = receiver.<span class="fn">readAll</span>();
+    Serial.<span class="fn">println</span>(state);  <span class="cm">// "U;D;L;R;C:U;D;L;R;C:analog1:analog2"</span>
+  }
+}</code></pre>
+    </div>
+
+    <h3 style="margin-top:2.6rem;" class="reveal">API Reference</h3>
+    <div class="table-wrap reveal">
+      <table>
+        <thead>
+          <tr><th>Method</th><th>Returns</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>setup(name, sda, scl, smartConnect, priority)</code></td><td>void</td><td>Initializes I2C/OLED, WiFi, and ESP-NOW. Call once in <code>setup()</code>.</td></tr>
+          <tr><td><code>run()</code></td><td>void</td><td>Starts the receiver state machine (a FreeRTOS task on ESP32; arms cooperative mode on ESP8266).</td></tr>
+          <tr><td><code>tick()</code></td><td>void</td><td>Drives the state machine on ESP8266. Call every <code>loop()</code>. Safe no-op on ESP32.</td></tr>
+          <tr><td><code>readAll()</code></td><td>String</td><td>Thread-safe snapshot of the last received command: <code>"U;D;L;R;C:U;D;L;R;C:a1:a2"</code> — DPAD1, DPAD2, then two 0-100 analog values.</td></tr>
+          <tr><td><code>isConnected()</code></td><td>bool</td><td>True while a transmitter is actively paired.</td></tr>
+          <tr><td><code>getState()</code></td><td>ReceiverState</td><td>The raw state machine value: <code>RX_IDLE</code>, <code>RX_ADVERTISING</code>, <code>RX_HANDSHAKE</code>, <code>RX_PIN_WAIT</code>, <code>RX_CONNECTED</code>, or <code>RX_DISCONNECTED</code>.</td></tr>
+          <tr><td><code>setTelemetry(const char* data)</code></td><td>void</td><td>Sets the string sent back to the transmitter on every received command (e.g. battery level, sensor data, status).</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="margin-top:2.6rem;" class="reveal">Wiring a Receiver — Example</h3>
+    <p class="reveal">Driving an L298N motor driver from a NodeMCU (ESP8266), controlled by the transmitter's left D-pad:</p>
+    <div class="codeblock reveal">
+      <div class="chrome"><div class="dots"><span></span><span></span><span></span></div><span class="fname">L298N_Receiver.ino</span></div>
+      <pre><code><span class="kw">#include</span> <span class="str">&lt;Smart_Connect.h&gt;</span>
+Smart_Connect receiver;
+
+<span class="kw">constexpr</span> <span class="kw">uint8_t</span> IN1 = D1, IN2 = D2;  <span class="cm">// Motor A</span>
+<span class="kw">constexpr</span> <span class="kw">uint8_t</span> IN3 = D7, IN4 = D8;  <span class="cm">// Motor B — kept off D3/D4 (boot-strap pins)</span>
+
+<span class="kw">void</span> <span class="fn">setup</span>() {
+  pinMode(IN1, OUTPUT); pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT); pinMode(IN4, OUTPUT);
+
+  receiver.<span class="fn">setup</span>(<span class="str">"AIO-RX-Bot"</span>, D5, D6, <span class="kw">false</span>, <span class="num">1</span>);  <span class="cm">// OLED on D5/D6</span>
+  receiver.<span class="fn">run</span>();
+}
+
+<span class="kw">void</span> <span class="fn">loop</span>() {
+  receiver.<span class="fn">tick</span>();
+
+  <span class="kw">if</span> (receiver.<span class="fn">isConnected</span>()) {
+    String cmd = receiver.<span class="fn">readAll</span>();
+    <span class="cm">// parse cmd, drive IN1-IN4 accordingly, then:</span>
+    receiver.<span class="fn">setTelemetry</span>(<span class="str">"MOTOR:OK"</span>);
+  }
+}</code></pre>
+    </div>
+
+    <p style="margin-top:1.5rem;" class="reveal"><strong>Note:</strong> on ESP8266 boards, avoid wiring motor/actuator control pins to <code>D3</code>/<code>D4</code> (GPIO0/GPIO2) — these are boot-strapping pins and must read HIGH at power-on, or the board can fail to boot correctly.</p>
+  </div>
+</section>
+
+<!-- ================= FULL API / PROTOCOL DETAIL ================= -->
+<section id="api">
+  <div class="wrap">
+    <span class="eyebrow reveal">Under the Hood</span>
+    <h2 class="reveal">How pairing actually works</h2>
+    <p class="lead reveal">Both pairing modes ride on the same ESP-NOW radio and are fully handled by the library — this section is for anyone extending or debugging it.</p>
+
+    <div class="steps" style="margin-top:2.6rem;">
+      <div class="step reveal">
+        <h3>Advertising</h3>
+        <p>The receiver broadcasts an advertise packet twice per second, including its name and MAC address. It does not scan — the transmitter finds it.</p>
+      </div>
+      <div class="step reveal">
+        <h3>Handshake (ESP_NOW mode)</h3>
+        <p>The transmitter sends a <code>Hello</code> packet. The receiver replies with <code>Hello_ACK</code>, then <code>CONN_OK</code>. The transmitter echoes <code>CONN_OK</code> back — session open. No PIN, no encryption.</p>
+      </div>
+      <div class="step reveal">
+        <h3>PIN Authentication (Smart Connect mode)</h3>
+        <p>After a connection request, the receiver generates a random 4-digit PIN via hardware RNG and displays it on its OLED. The transmitter must submit a matching PIN before the session opens.</p>
+      </div>
+      <div class="step reveal">
+        <h3>Active Session</h3>
+        <p>The transmitter streams D-pad and analog state continuously; the receiver replies with whatever telemetry string you set via <code>setTelemetry()</code>. Every handshake packet is retransmitted every ~500ms so a single dropped packet never stalls pairing.</p>
+      </div>
+      <div class="step reveal">
+        <h3>Watchdog Teardown</h3>
+        <p>If either side goes silent, the connection is automatically torn down — the receiver won't keep driving motors on a stale last command if the transmitter disappears.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ABOUT ================= -->
+<section id="about">
+  <div class="wrap">
+    <span class="eyebrow reveal">About the Creator</span>
+    <h2 class="reveal">Built by a student, in the open.</h2>
+    <div class="card reveal" style="margin-top:1.5rem;max-width:640px;">
+      <h3>Ashutosh Peri</h3>
+      <p style="margin-bottom:0;">
+        A 9th-grade student at <strong>Kendriya Vidyalaya No.1 SVN</strong>, and an
+        independent maker developing open-source hardware. AIO Transmitter and
+        Smart Connect are part of a broader ecosystem called
+        <strong>StrawberryOS</strong> — a shared firmware and design language across
+        multiple embedded devices, including an earlier project,
+        <strong>StrawberryWatch</strong> (originally released as QuantumWatch).
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= LINKS / FOOTER ================= -->
+<footer id="links">
+  <div class="wrap">
+    <div class="brand"><span class="dot"></span> AIO&nbsp;Transmitter</div>
+    <p style="max-width:520px;margin:0 auto;">Open source. GNU GPL v3. Fork it, build it, evolve it.</p>
+    <div class="footlinks">
+      <a href="https://github.com/periashutosh-prog/AIO-Transmitter" target="_blank" rel="noopener">AIO Transmitter — GitHub</a>
+      <a href="https://github.com/periashutosh-prog/Smart-Connect" target="_blank" rel="noopener">Smart Connect — GitHub</a>
+      <a href="https://github.com/periashutosh-prog/StrawberryOS" target="_blank" rel="noopener">StrawberryOS</a>
+      <a href="https://oshwlab.com/periashutosh/quantumwatch" target="_blank" rel="noopener">StrawberryWatch on OSHWLab</a>
+      <a href="https://aio-transmitter.vercel.app" target="_blank" rel="noopener">Project Website</a>
+    </div>
+    <p class="fineprint">© 2026 Ashutosh Peri. Hardware &amp; Firmware licensed under GNU GPL v3.<br>Strictly no commercialization — shared for personal, educational, and non-commercial use only.</p>
+  </div>
+</footer>
+
+<script>
+  // Scroll-reveal
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, {threshold:0.12, rootMargin:'0px 0px -40px 0px'});
+  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+
+  // Active nav link on scroll
+  var sections = ['overview','hardware','smart-connect','api','about','links']
+    .map(function(id){ return document.getElementById(id); }).filter(Boolean);
+  var navA = document.querySelectorAll('#navlinks a[data-nav]');
+  var navIo = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){
+        var id = entry.target.getAttribute('id');
+        navA.forEach(function(a){
+          a.classList.toggle('active', a.getAttribute('href') === '#'+id);
+        });
+      }
+    });
+  }, {rootMargin:'-40% 0px -50% 0px'});
+  sections.forEach(function(s){ navIo.observe(s); });
+</script>
+
+</body>
+</html>

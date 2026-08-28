@@ -1,0 +1,14 @@
+# Arduino/PlatformIO build artifacts — regenerated from source, never commit
+build/
+*.elf
+*.map
+*.bin
+*.hex
+
+# Editor/OS cruft
+.DS_Store
+Thumbs.db
+*.tmp
+
+# Arduino IDE / Claude project metadata
+.claude/
